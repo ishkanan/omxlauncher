@@ -1,45 +1,14 @@
 # README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+Launcher script and monitor for omxplayer. Auto-restarts omxplayer if it ever shuts down due to a disconnect or reboot.
 
-### What is this repository for? ###
+## Setup ##
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* Checkout the repository with `mkdir -p /home/pi/omxlauncher/repo && git clone https://github.com/ishkanan/omxlauncher /home/pi/omxlauncher/repo`.
+* Decide which WOWZA stream the Pi is going to play and get its URL.
+* Add launcher script to system startup with `sudo echo '/home/pi/omxlauncher/repo/omxlauncher.sh <URL>' >> /etc/rc.local`.
+* Reboot the Pi
 
-### How do I get set up? ###
+## Who do I talk to? ##
 
-* Summary of set up
-
-
-* Configuration
-Copy asplashscreen to /etc/init.d
-chmod +x /etc/init.d/asplashscreen
-
-asplashscreen links to /etc/splash.png
-
-To replace the spash screen.png place here /etc/splash.png
-
-Add the command to 
-
-#launch omxlauncher /etc/rc.local 
-python /home/pi/omxlauncher/omxlauncher.py
-
-* Dependencies
-
-
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+Anthony Ishkan (anthony.ishkan@gmail.com)
