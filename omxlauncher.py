@@ -7,7 +7,7 @@ import signal
 import sys
 import time
 
-OMX_CMD = "omxplayer -adev hdmi --threshold 1 {url}"
+OMX_CMD = "omxplayer -o hdmi --avdict rtsp_transport:tcp --threshold 0.2 {url}"
 #OMX_CMD = "google-chrome {url}"
 child = None
 logger = None
