@@ -1,12 +1,21 @@
 # README #
 
-Launcher script and monitor for omxplayer. Auto-restarts omxplayer if it ever shuts down due to a disconnect or reboot.
+Launcher and monitor script for omxplayer and VLC. Auto-restarts the player if it shuts down due to a disconnect or reboot.
 
 ## Setup ##
 
-* Checkout the repository with `mkdir -p /home/pi/omxlauncher/repo && git clone https://github.com/ishkanan/omxlauncher /home/pi/omxlauncher/repo`.
-* Decide which WOWZA stream the Pi is going to play and get its URL.
-* Add launcher script to system startup by adding `/home/pi/omxlauncher/repo/omxlauncher.sh "<URL>"` to `/etc/rc.local`.
+* Checkout this repository with:
+
+```bash
+dest=/home/pi/streamwatcher/repo
+rm -Rf $dest && mkdir -p $dest
+git clone https://github.com/ishkanan/streamwatcher $dest
+```
+
+* Determine the URL of the WOWZA/media stream the player is going to connect to
+
+* Add the launcher script to system startup by running the correct Ansible playbook
+
 * Reboot the Pi
 
 ## Who do I talk to? ##
