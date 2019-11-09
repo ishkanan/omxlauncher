@@ -128,7 +128,8 @@ def do_multi_stream(player, streams, cyclesecs):
         if ret != 0:
             logger.warn("The player has stopped, will attempt to restart it.")
         else:
-            logger.info("Stream played for long enough, will cycle to next one.")
+            player_proc.close()
+            logger.info("Stream has played for long enough, will cycle to next one.")
 
 ##########################
 
