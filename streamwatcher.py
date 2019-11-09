@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import logging
 import os
@@ -8,6 +8,8 @@ import sys
 from threading import Thread
 import time
 
+from bottle import route, run
+
 PLAYER_CMDS = {
     "omx": "omxplayer -b -o hdmi --avdict rtsp_transport:tcp --threshold 0.2 {url}",
     "vlc": "vlc {url}",
@@ -15,6 +17,8 @@ PLAYER_CMDS = {
 
 logger = None
 player_proc = None
+
+##########################
 
 def signal_handler(signum, frame):
     """Handles a SIGHUP or SIGKILL from the OS.
@@ -53,18 +57,24 @@ def do_single_stream(player, stream):
     logger.debug("Starting single stream infinity loop...")
     while True:
         logger.info("Launching {} player...".format(player.upper()))
-        player_proc = pexpect.spawn(cmd)
+        try:
+            player_proc = pexpect.spawn(cmd)
+        except Exception as ex:
+            logger.warning("Launch error, will retry in 10 secs - {}".format(ex))
+            time.sleep(10)
+            continue
+
         ret = player_proc.expect([pexpect.TIMEOUT, pexpect.EOF], timeout=10)
         if ret == 0:
             logger.info("The player is now running.")
         else:
-            logger.warn("The player did not start, will retry in 10 secs.")
+            logger.warning("The player did not start, will retry in 10 secs.")
             time.sleep(10)
             continue
 
         while ret == 0:
             ret = player_proc.expect([pexpect.TIMEOUT, pexpect.EOF], timeout=5)
-        logger.warn("The player has stopped, will attempt to restart it.")
+        logger.warning("The player has stopped, will attempt to restart it.")
 
 def do_multi_stream(player, streams, cyclesecs):
     """Runs a best-effort loop to keep the player always watching a stream,
@@ -76,26 +86,35 @@ def do_multi_stream(player, streams, cyclesecs):
     s_index = 0
 
     def cycler():
+        nonlocal cycle
         while True:
             time.sleep(cyclesecs)
+            logger.debug("Setting stream cycle flag.")
             cycle = True
 
     logger.debug("Starting multi stream cycler thread...")
-    t = threading.Thread(target=cycler)
+    t = Thread(target=cycler, daemon=True)
     t.start()
 
     logger.debug("Starting multi stream infinity loop...")
     while True:
         if cycle:
+            logger.debug("Honouring stream cycle flag.")
             cycle = False
-            s_index = s_index + 1 if s_index < len(streams) else 0
+            s_index = s_index + 1 if s_index < len(streams) - 1 else 0
         stream = streams[s_index]
 
         logger.info("Launching {} player with stream '{}'...".format(
             player.upper(),
             stream,
         ))
-        player_proc = pexpect.spawn(cmd.format(url=stream))
+        try:
+            player_proc = pexpect.spawn(cmd.format(url=stream))
+        except Exception as ex:
+            logger.warning("Launch error, will retry in 10 secs - {}".format(ex))
+            time.sleep(10)
+            continue
+
         ret = player_proc.expect([pexpect.TIMEOUT, pexpect.EOF], timeout=10)
         if ret == 0:
             logger.info("The player is now running.")
@@ -113,19 +132,32 @@ def do_multi_stream(player, streams, cyclesecs):
 
 ##########################
 
+def run_server():
+    run(host="0.0.0.0", port=7070)
+
+@route("/status")
+def status():
+    return {}
+
+##########################
+
 if __name__ == "__main__":
     """CLI entry point
     """
     if len(sys.argv) < 4:
         print("USAGE: streamwatcher <logfile> <player> <stream URL 1> [ <stream URL 2> ... cyclesecs ]")
         sys.exit(-1)
+
     logger = make_logger("streamwatcher", sys.argv[1])
     signal.signal(signal.SIGINT, signal_handler)
+    bottle_thread = Thread(target=run_server, daemon=True)
+    bottle_thread.start()
+
     player = sys.argv[2]
-    streams = [s for s in sys.argv[3:]]
+    streams = sys.argv[3:]
     if len(streams) == 1:
         do_single_stream(player, streams[0])
     else:
+        cyclesecs = int(streams[-1])
         streams = streams[:-1]
-        cyclesecs = sys.argv[-1]
         do_multi_stream(player, streams, cyclesecs)
