@@ -12,11 +12,11 @@ rm -Rf $dest && mkdir -p $dest
 git clone https://github.com/ishkanan/streamwatcher $dest
 ```
 
-* Determine the URL of the WOWZA/media stream the player is going to connect to
+* Determine which WOWZA/media stream(s) the player is going to connect to
 
-* Add the launcher script to system startup by running the correct Ansible playbook
+* Run the desired Ansible playbook to add the launcher script to system startup
 
-* Reboot the Pi
+* Enjoy the view after the Pi has rebooted
 
 ## Who do I talk to? ##
 
