@@ -159,7 +159,7 @@ def run_server():
     run(host="0.0.0.0", port=7070)
 
 @route("/status")
-def status():
+def get_status():
     global status
     return status
 
@@ -168,7 +168,6 @@ def status():
 if __name__ == "__main__":
     """CLI entry point
     """
-    global status
     if len(sys.argv) < 4:
         print("USAGE: streamwatcher <logfile> <player> <stream URL 1> [ <stream URL 2> ... cyclesecs ]")
         sys.exit(-1)
