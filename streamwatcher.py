@@ -18,18 +18,19 @@ PLAYER_CMDS = {
 logger = None
 player_proc = None
 status = {
+    "mode": "single",
     "status": "booting",
-    "stream": None,
+    "stream": "",
 }
 
 ##########################
 
 def set_status(stage, stream):
     global status
-    status = {
+    status.update({
         "status": stage,
         "stream": stream,
-    }
+    })
 
 def signal_handler(signum, frame):
     """Handles a SIGHUP or SIGKILL from the OS.
@@ -124,18 +125,22 @@ def do_multi_stream(player, streams, cyclesecs):
             player.upper(),
             stream,
         ))
+        set_status("launching", stream)
         try:
             player_proc = pexpect.spawn(cmd.format(url=stream))
         except Exception as ex:
             logger.warning("Launch error, will retry in 10 secs - {}".format(ex))
+            set_status("launch_fail", stream)
             time.sleep(10)
             continue
 
         ret = player_proc.expect([pexpect.TIMEOUT, pexpect.EOF], timeout=10)
         if ret == 0:
             logger.info("The player is now running.")
+            set_status("playing", stream)
         else:
             logger.warn("The player did not start, will retry in 10 secs.")
+            set_status("launch_fail", stream)
             time.sleep(10)
             continue
 
@@ -146,6 +151,7 @@ def do_multi_stream(player, streams, cyclesecs):
         else:
             player_proc.close()
             logger.info("Stream has played for long enough, will cycle to next one.")
+        set_status("stopped", stream)
 
 ##########################
 
@@ -162,6 +168,7 @@ def status():
 if __name__ == "__main__":
     """CLI entry point
     """
+    global status
     if len(sys.argv) < 4:
         print("USAGE: streamwatcher <logfile> <player> <stream URL 1> [ <stream URL 2> ... cyclesecs ]")
         sys.exit(-1)
@@ -174,8 +181,10 @@ if __name__ == "__main__":
     player = sys.argv[2]
     streams = sys.argv[3:]
     if len(streams) == 1:
+        status["mode"] = "single"
         do_single_stream(player, streams[0])
     else:
         cyclesecs = int(streams[-1])
         streams = streams[:-1]
+        status["mode"] = "cycle"
         do_multi_stream(player, streams, cyclesecs)
