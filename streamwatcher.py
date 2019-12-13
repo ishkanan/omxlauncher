@@ -17,8 +17,19 @@ PLAYER_CMDS = {
 
 logger = None
 player_proc = None
+status = {
+    "status": "booting",
+    "stream": None,
+}
 
 ##########################
+
+def set_status(stage, stream):
+    global status
+    status = {
+        "status": stage,
+        "stream": stream,
+    }
 
 def signal_handler(signum, frame):
     """Handles a SIGHUP or SIGKILL from the OS.
@@ -57,24 +68,29 @@ def do_single_stream(player, stream):
     logger.debug("Starting single stream infinity loop...")
     while True:
         logger.info("Launching {} player...".format(player.upper()))
+        set_status("launching", stream)
         try:
             player_proc = pexpect.spawn(cmd)
         except Exception as ex:
             logger.warning("Launch error, will retry in 10 secs - {}".format(ex))
+            set_status("launch_fail", stream)
             time.sleep(10)
             continue
 
         ret = player_proc.expect([pexpect.TIMEOUT, pexpect.EOF], timeout=10)
         if ret == 0:
             logger.info("The player is now running.")
+            set_status("playing", stream)
         else:
             logger.warning("The player did not start, will retry in 10 secs.")
+            set_status("launch_fail", stream)
             time.sleep(10)
             continue
 
         while ret == 0:
             ret = player_proc.expect([pexpect.TIMEOUT, pexpect.EOF], timeout=5)
         logger.warning("The player has stopped, will attempt to restart it.")
+        set_status("stopped", stream)
 
 def do_multi_stream(player, streams, cyclesecs):
     """Runs a best-effort loop to keep the player always watching a stream,
@@ -138,7 +154,8 @@ def run_server():
 
 @route("/status")
 def status():
-    return {}
+    global status
+    return status
 
 ##########################
 
