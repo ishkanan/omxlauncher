@@ -10,6 +10,6 @@ cd repo
 pip install -r requirements.txt
 
 # launch
-python streamwatcher.py "streamwatcher.log" $@
+python streamwatcher.py $@
 deactivate
 cd ..

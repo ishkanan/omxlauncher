@@ -10,7 +10,7 @@ import sys
 from threading import Thread
 import time
 
-from bottle import route, run
+from bottle import put, route, run
 
 PLAYER_CMDS = {
     "omx": "omxplayer -b -o hdmi --avdict rtsp_transport:tcp --live --threshold 0.2 {url}",
@@ -59,17 +59,13 @@ def signal_handler(signum, frame):
     logger.info("Gracefully stopped. Bye.")
     sys.exit(0)
 
-def make_logger(name, out_file):
+def make_logger(name):
     """Creates a logger with specified name that writes to console and
     specified output file.
     """
     l = logging.getLogger(name)
     l.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s  - %(levelname)s - %(message)s')
-    ch = logging.FileHandler(out_file)
-    ch.setLevel(logging.DEBUG)
-    ch.setFormatter(formatter)
-    l.addHandler(ch)
     ch = logging.StreamHandler(stream=sys.stdout)
     ch.setLevel(logging.DEBUG)
     ch.setFormatter(formatter)
@@ -227,22 +223,27 @@ def get_status():
     global status
     return status
 
+@put("/reboot")
+def do_reboot():
+    os.system("reboot")
+    return ""
+
 ##########################
 
 if __name__ == "__main__":
     """CLI entry point
     """
-    if len(sys.argv) < 4:
-        print("USAGE: streamwatcher <logfile> <player> <stream URL 1> [ <stream URL 2> ... cyclesecs ]")
+    if len(sys.argv) < 3:
+        print("USAGE: streamwatcher <player> <stream URL 1> [ <stream URL 2> ... cyclesecs ]")
         sys.exit(-1)
 
-    logger = make_logger("streamwatcher", sys.argv[1])
+    logger = make_logger("streamwatcher")
     signal.signal(signal.SIGINT, signal_handler)
     bottle_thread = Thread(target=run_server, daemon=True)
     bottle_thread.start()
 
-    player = sys.argv[2]
-    streams = sys.argv[3:]
+    player = sys.argv[1]
+    streams = sys.argv[2:]
     if len(streams) == 1:
         status["mode"] = "single"
         do_single_stream(player, streams[0])
