@@ -10,7 +10,7 @@ import sys
 from threading import Thread
 import time
 
-from bottle import put, route, run
+from bottle import route, run
 
 PLAYER_CMDS = {
     "omx": "omxplayer -b -o hdmi --avdict rtsp_transport:tcp --live --threshold 0.2 {url}",
@@ -223,7 +223,7 @@ def get_status():
     global status
     return status
 
-@put("/reboot")
+@route("/reboot")
 def do_reboot():
     os.system("reboot")
     return ""
