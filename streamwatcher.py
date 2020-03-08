@@ -226,7 +226,7 @@ def get_status():
 @route("/reboot")
 def do_reboot():
     os.system("reboot")
-    return ""
+    return {}
 
 ##########################
 
